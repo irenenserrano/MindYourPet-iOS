@@ -6,19 +6,29 @@
 //
 
 import SwiftUI
+import FirebaseCore
 
 struct ContentView: View {
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
-    }
-}
+        NavigationStack {
+            VStack {
+                NavigationLink(destination: CreatePetProfile(species: .dog)) {
+                    Image(systemName: "globe")
+                        .imageScale(.large)
+                        .foregroundStyle(.tint)
+                    Text("Hello, world!")
+                }
+               
+            }
+            .padding()
+        }// end NavigationStack
+       
+    }// end body
+}// end struct
 
 #Preview {
     ContentView()
 }
+
+
+
