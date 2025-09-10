@@ -15,6 +15,7 @@ struct CreatePetProfile: View {
     @State private var selectedItem: PhotosPickerItem?
     @State private var profilePic: Image? = Image(.defaultProfilePic)
     @State var name = ""
+    @State private var showAlert: Bool = false
     @State var species: SpeciesModel
     @State var age = ""
     @Environment(\.dismiss) private var dismiss
@@ -61,6 +62,7 @@ struct CreatePetProfile: View {
                         TextField("What is your pet's name? ", text: $name)
                             .frame(height: 50)
                             .background(Color.pink.brightness(0.7))
+                            .border(name.isEmpty && showAlert ? Color.gray : Color.pink, width: 1)
                             .padding(.horizontal, 10)
                         
                         TextField("How old is your pet? (optional)", text: $age)
@@ -111,6 +113,10 @@ struct CreatePetProfile: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button ("Save") {
                         Task {
+                            
+                            if name.isEmpty {
+                                showAlert.toggle()
+                            }
                             var ageInYears: Int = -1
                             if age != "" && Int(age) != nil {
                                 ageInYears = Int(age)!
@@ -123,14 +129,19 @@ struct CreatePetProfile: View {
                                 return
                             }
                             
-                            let success = await uploadDataToCloudStorage(pet: newPet, image: profileImage)
+                            if showAlert == false {
+                                let success = await uploadDataToCloudStorage(pet: newPet, image: profileImage)
+                                dismiss()
+                            }
                             
-                            print(success)
-                            dismiss()
+                            
                         }
+                    }// end Button
+                    .alert(isPresented: $showAlert) {
+                        Alert(title: Text("Name required"), message: Text("Please enter a name for your pet"), dismissButton: .default(Text("OK")))
                     }
-                }
-            }
+                }// end ToolBarItem
+            }// end toolbar
         }// end NavigationStack
     }// end body
 }
@@ -175,7 +186,6 @@ func uploadDataToCloudStorage(pet: Pet, image: UIImage) async -> Bool {
     }
     
     let db = Firestore.firestore()
-//     let collectionString = "Pets\\\(pet.name)"
     
     do {
         var newPetProfile = pet
