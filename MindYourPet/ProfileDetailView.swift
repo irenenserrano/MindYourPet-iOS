@@ -16,6 +16,7 @@ struct ProfileDetailView: View {
     @State private var emptyRemindersList: Bool = false
     @State private var emptyAlarmsList: Bool = false
     @State var petProfileID: String
+    @FocusState private var isEditorFocused: Bool
     
     struct MyReminderItem: Identifiable {
         let id = UUID()
@@ -55,9 +56,18 @@ struct ProfileDetailView: View {
                 Section {
                     TextEditor(text: $note)
                         .frame(height: 100)
+                        .focused($isEditorFocused)
                         .onAppear {
                             Task {
                                 await fetchCareNotes(profileID: petProfileID)
+                            }
+                        }
+                        .toolbar {
+                            ToolbarItemGroup(placement: .keyboard) {
+                                Spacer()
+                                Button("Done") {
+                                    isEditorFocused = false
+                                }
                             }
                         }
                 } header: {
@@ -71,6 +81,7 @@ struct ProfileDetailView: View {
                         await uploadCareNotes(text: newValue, profileID: petProfileID)
                     }
                 }
+                
                 
                 Section {
                     if emptyRemindersList {
@@ -249,7 +260,7 @@ struct ProfileDetailView: View {
                
             }
         }
-    }
+    }// end fetchCareNotes
     
 }// end struct
 
