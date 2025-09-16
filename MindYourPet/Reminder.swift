@@ -8,19 +8,21 @@ import Foundation
 import FirebaseFirestore
 import Firebase
 
-struct Pet: Identifiable, Codable {
+struct Reminder: Identifiable, Codable {
     @DocumentID var documentID: String?
-    let name: String
-    let speciesEmoji: SpeciesModel.ID
-    var profileImageURL = "" // ? makes it so that this property is considered optional
-    var age: Int
+    let title: String
+    let reminderTime: Date
+    let notes: String
+    let repeating: Bool
     
-    var id: String {self.name}
+    var id: String {self.title}
     
     var dictionary: [String: Any] {
-        return ["name": name,
-                "speciesEmoji": speciesEmoji,
-                "profileImageURL": profileImageURL,
-                "age": age]
+        return [
+            "title": title,
+            "reminderTime": reminderTime,
+            "notes": notes,
+            "repeating": repeating
+        ]
     }
 }

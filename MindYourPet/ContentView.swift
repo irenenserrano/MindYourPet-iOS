@@ -16,6 +16,7 @@ struct ContentView: View {
     
     struct MyDataItem: Identifiable {
         let id = UUID()
+        let profileID: String
         let name: String
         let age: Int
         let profileImageURL: String
@@ -25,14 +26,12 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.pink.ignoresSafeArea().brightness(0.5)
-                
                 NavigationLink(destination: CreatePetProfile(species: .dog), isActive: $showAddPetView) {
                     EmptyView()
                 }// end NavigationLink
                 
                 let newListOfDicts = listOfDictionaries.map { dict in
-                    MyDataItem(name: dict["name"] as! String, age: dict["age"] as! Int, profileImageURL: dict["profileImageURL"] as! String, speciesEmoji: dict["speciesEmoji"] as! String)
+                    MyDataItem(profileID: dict["id"] as! String, name: dict["name"] as! String, age: dict["age"] as! Int, profileImageURL: dict["profileImageURL"] as! String, speciesEmoji: dict["speciesEmoji"] as! String)
                 }
                 List {
                     if emptyList {
@@ -41,7 +40,7 @@ struct ContentView: View {
                     ForEach(newListOfDicts) { dict in
                         VStack{
                             NavigationLink {
-                                
+                                ProfileDetailView(petProfileID: dict.profileID)
                             } label: {
                                 HStack{
                                     let imageURL = URL(string: dict.profileImageURL) ?? URL(string: "")
@@ -60,7 +59,10 @@ struct ContentView: View {
                             }// end NavigationLink
                         }// end VStack
                     }// end ForEach
+                    .listRowBackground(Color.pink.ignoresSafeArea().brightness(0.7))
                 }// end List
+                .scrollContentBackground(.hidden)
+                .background(Color.pink.ignoresSafeArea().brightness(0.5))
             }// end ZStack
             .onAppear {
                 Task {
@@ -100,7 +102,9 @@ func loadData() async -> [[String: Any]] {
         let querySnapshot = try await db.collection("Pets").getDocuments()
         for document in querySnapshot.documents {
             let documentData = document.data()
+            let documentID = document.documentID
             let petData: [String: Any] = [
+                "id": documentID,
                 "name": documentData["name"] as! String,
                 "profileImageURL": documentData["profileImageURL"] as! String,
                 "age": documentData["age"] as! Int,
