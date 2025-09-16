@@ -10,7 +10,7 @@ import FirebaseCore
 import FirebaseFirestore
 
 struct ProfileDetailView: View {
-    @State private var initialText: String = "Add care notes..."
+    @State var note: String = "Add care notes..."
     @State private var listOfReminders: [[String: Any]] = []
     @State private var listOfAlarms: [[String: Any]] = []
     @State private var emptyRemindersList: Bool = false
@@ -53,15 +53,24 @@ struct ProfileDetailView: View {
             
             List {
                 Section {
-                    TextEditor(text: $initialText)
+                    TextEditor(text: $note)
                         .frame(height: 100)
-                        
+                        .onAppear {
+                            Task {
+                                await fetchCareNotes(profileID: petProfileID)
+                            }
+                        }
                 } header: {
                     Text("Care notes")
                         .font(.title.bold())
                         .foregroundStyle(.black)
                 }// end Section
                 .listRowBackground(Color.pink.brightness(0.7))
+                .onChange(of: note) { newValue in
+                    Task {
+                        await uploadCareNotes(text: newValue, profileID: petProfileID)
+                    }
+                }
                 
                 Section {
                     if emptyRemindersList {
@@ -165,7 +174,7 @@ struct ProfileDetailView: View {
                 let documentData = document.data()
                 let timestamp = documentData["reminderTime"] as? Timestamp
                 let date = timestamp?.dateValue()
-               
+                
                 let reminder: [String: Any] = [
                     "title": documentData["title"] as! String,
                     "reminderTime": date!,
@@ -205,6 +214,43 @@ struct ProfileDetailView: View {
         }
         return alarms
     }// end loadData
+    
+    func uploadCareNotes(text: String, profileID: String) async -> Bool{
+        let db = Firestore.firestore()
+        
+        do {
+            try await db.collection("Pets").document(profileID).updateData(["careNotes": text])
+            return true
+        } catch {
+            print("Could not upload care notes: \(error)")
+            return false
+        }
+    }// end uploadCareNotes
+
+    func fetchCareNotes(profileID: String) async {
+        let db = Firestore.firestore()
+        
+        let documentRef = try await db.collection("Pets").document(profileID)
+        
+        documentRef.getDocument { documentSnapShot, error in
+            if let error = error {
+                print("Error getting document: \(error)")
+            }
+            
+            guard let document = documentSnapShot, document.exists else {
+                print("Document does not exist")
+                return
+            }
+            
+            if let data = document.data() {
+                if data["careNotes"] != nil {
+                    self.note = data["careNotes"] as! String
+                }
+               
+            }
+        }
+    }
+    
 }// end struct
 
 #Preview {
